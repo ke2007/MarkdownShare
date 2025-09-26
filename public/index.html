@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>마크다운 문서 공유</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Marked.js for Markdown parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <!-- Custom styles -->
+    <link rel="stylesheet" href="styles.css">
+
+    <style>
+        /* 커스텀 스크롤바 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* 마크다운 콘텐츠 스타일 */
+        .markdown-content h1 {
+            font-size: 2em;
+            font-weight: 700;
+            margin: 1em 0 0.5em;
+            padding-bottom: 0.3em;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .markdown-content h2 {
+            font-size: 1.5em;
+            font-weight: 600;
+            margin: 1em 0 0.5em;
+            padding-bottom: 0.3em;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .markdown-content h3 {
+            font-size: 1.25em;
+            font-weight: 600;
+            margin: 1em 0 0.5em;
+        }
+        .markdown-content p {
+            margin: 0.5em 0;
+            line-height: 1.6;
+        }
+        .markdown-content ul, .markdown-content ol {
+            margin: 0.5em 0;
+            padding-left: 2em;
+        }
+        .markdown-content li {
+            margin: 0.25em 0;
+        }
+        .markdown-content code {
+            background-color: #f3f4f6;
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+        .markdown-content pre {
+            background-color: #1f2937;
+            color: #f9fafb;
+            padding: 1em;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 1em 0;
+        }
+        .markdown-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .markdown-content blockquote {
+            border-left: 4px solid #d1d5db;
+            padding-left: 1em;
+            margin: 1em 0;
+            color: #6b7280;
+        }
+        .markdown-content table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        .markdown-content th, .markdown-content td {
+            border: 1px solid #d1d5db;
+            padding: 0.5em;
+            text-align: left;
+        }
+        .markdown-content th {
+            background-color: #f3f4f6;
+            font-weight: 600;
+        }
+        .markdown-content a {
+            color: #3b82f6;
+            text-decoration: underline;
+        }
+        .markdown-content a:hover {
+            color: #2563eb;
+        }
+        .markdown-content img {
+            max-width: 100%;
+            height: auto;
+            margin: 1em 0;
+        }
+
+        /* 다크모드 스타일 */
+        .dark .markdown-content h1,
+        .dark .markdown-content h2 {
+            border-bottom-color: #374151;
+        }
+        .dark .markdown-content code {
+            background-color: #374151;
+        }
+        .dark .markdown-content blockquote {
+            border-left-color: #4b5563;
+            color: #9ca3af;
+        }
+        .dark .markdown-content th,
+        .dark .markdown-content td {
+            border-color: #4b5563;
+        }
+        .dark .markdown-content th {
+            background-color: #374151;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+    <!-- 헤더 -->
+    <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+        <div class="px-4 py-4 flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">
+                📄 마크다운 문서 공유
+            </h1>
+            <div class="flex gap-2">
+                <label for="fileInput" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 cursor-pointer transition font-medium">
+                    📤 파일 업로드
+                </label>
+                <input type="file" id="fileInput" accept=".md,.markdown,.jpg,.jpeg,.png,.gif,.webp,.svg" class="hidden">
+            </div>
+        </div>
+    </header>
+
+    <!-- 메인 컨테이너 -->
+    <div class="flex h-[calc(100vh-73px)]">
+        <!-- 사이드바 - 파일 목록 -->
+        <aside id="sidebar" class="w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-300">
+            <div class="p-4">
+                <!-- 상단 헤더 -->
+                <div class="flex justify-between items-center mb-4">
+                    <h2 id="sidebarTitle" class="text-lg font-semibold">파일 목록</h2>
+                    <div class="flex gap-1">
+                        <button id="refreshBtn" class="p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition" title="새로고침">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                        </button>
+                        <button id="sidebarToggle" class="p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition" title="사이드바 최소화/최대화">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div id="fileList" class="space-y-2">
+                    <!-- 파일 목록이 여기 표시됩니다 -->
+                    <div class="text-gray-500 text-center py-8">
+                        업로드된 파일이 없습니다
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 메인 콘텐츠 영역 -->
+        <main class="flex-1 bg-white dark:bg-gray-800 overflow-y-auto">
+            <div id="contentArea" class="p-8">
+                <!-- 초기 화면 -->
+                <div id="welcomeScreen" class="flex flex-col items-center justify-center h-full text-gray-500">
+                    <svg class="w-24 h-24 mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    <h2 class="text-2xl font-semibold mb-2">마크다운 문서를 선택하세요</h2>
+                    <p class="text-center">
+                        왼쪽 목록에서 문서를 선택하거나<br>
+                        새 마크다운 파일을 업로드하세요
+                    </p>
+                </div>
+
+                <!-- 마크다운 콘텐츠 -->
+                <div id="markdownContent" class="markdown-content prose max-w-none hidden">
+                    <!-- 마크다운 렌더링 결과가 여기 표시됩니다 -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 그룹 편집 모드 -->
+    <div id="groupEditModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white dark:bg-gray-800 rounded-lg max-w-4xl w-full mx-4 max-h-[80vh] overflow-hidden">
+            <!-- 헤더 -->
+            <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold">그룹 편집</h2>
+                    <button id="cancelGroupBtn" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                <input type="text" id="groupNameInput" placeholder="그룹명을 입력하세요"
+                       class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+            </div>
+
+            <!-- 파일 목록 -->
+            <div class="p-6 overflow-y-auto" style="max-height: calc(80vh - 200px);">
+                <div class="mb-4">
+                    <h3 class="font-medium text-gray-700 dark:text-gray-300 mb-2">업로드된 파일</h3>
+                    <div id="groupFilesList" class="space-y-2 min-h-[100px] border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4">
+                        <div id="emptyGroupMessage" class="text-center text-gray-500 py-8">
+                            파일을 업로드하거나 드래그해서 추가하세요
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 파일 추가 버튼 -->
+                <div class="flex gap-2 mb-4">
+                    <label for="groupFileInput" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 cursor-pointer transition font-medium">
+                        📁 파일 추가
+                    </label>
+                    <input type="file" id="groupFileInput" multiple accept=".md,.markdown,.jpg,.jpeg,.png,.gif,.webp,.svg" class="hidden">
+
+                    <div class="px-4 py-2 bg-gray-500 text-white rounded-lg font-medium">
+                        또는 <strong>Ctrl+V</strong>로 이미지 붙여넣기
+                    </div>
+                </div>
+            </div>
+
+            <!-- 푸터 -->
+            <div class="p-6 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-2">
+                <button id="cancelGroupBtn2" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition">
+                    취소
+                </button>
+                <button id="completeGroupBtn" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition">
+                    완료
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 로딩 스피너 -->
+    <div id="loadingSpinner" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 flex items-center space-x-3">
+            <svg class="animate-spin h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span>처리 중...</span>
+        </div>
+    </div>
+
+    <!-- 토스트 메시지 -->
+    <div id="toast" class="fixed bottom-4 right-4 hidden">
+        <div class="bg-gray-800 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2">
+            <span id="toastMessage"></span>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="app.js"></script>
+</body>
+</html>
